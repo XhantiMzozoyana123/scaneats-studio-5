@@ -1,5 +1,5 @@
 
-'use server';
+// 'use server'; // Disabled for mobile static export
 
 /**
  * @fileOverview An AI agent that provides health insights based on user profile.

@@ -1,5 +1,5 @@
 
-'use server';
+// 'use server'; // Disabled for mobile static export
 /**
  * @fileOverview Food item scanner and nutritional information provider.
  * This flow replicates the two-step AI process from the original C# backend.
@@ -54,17 +54,15 @@ export const foodScanNutrition = ai.defineFlow(
     2.  **Use Reliable Data**: Base your analysis on common portion sizes and standard nutritional data from reliable databases.
     3.  **Realistic Estimates**: Focus on realistic estimates, not random guesses.
     4.  **Repeatable Output**: If the same food appears again, always return the same output.
-
-    Photo: {{media url=photoDataUri}}
     
     Give me the food identification and nutrition information in the required JSON format. If you cannot determine the calories, set it to 0.`;
 
     const { output } = await ai.generate({
-      prompt: prompt,
+      prompt: [
+        { text: prompt },
+        { media: { url: photoDataUri } }
+      ],
       model: 'googleai/gemini-2.0-flash',
-      input: {
-        photoDataUri
-      },
       output: {
         schema: FoodScanNutritionOutputSchema,
       },

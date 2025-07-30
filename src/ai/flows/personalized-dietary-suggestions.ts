@@ -1,4 +1,4 @@
-'use server';
+// 'use server'; // Disabled for mobile static export
 /**
  * @fileOverview An AI agent that provides personalized dietary suggestions based on scanned food items, dietary goals, and user preferences.
  *

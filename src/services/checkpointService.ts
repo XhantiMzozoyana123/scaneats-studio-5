@@ -1,5 +1,5 @@
 
-'use server';
+// 'use server'; // Disabled for mobile static export
 
 import { API_BASE_URL } from '@/lib/api';
 

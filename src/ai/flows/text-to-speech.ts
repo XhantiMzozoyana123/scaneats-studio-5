@@ -1,4 +1,4 @@
-'use server';
+// 'use server'; // Disabled for mobile static export
 /**
  * @fileOverview A text-to-speech AI agent.
  *

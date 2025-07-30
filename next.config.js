@@ -10,7 +10,11 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 
 const nextConfig = {
   /* config options here */
+  output: 'export',
+  trailingSlash: true,
+  distDir: 'out',
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',

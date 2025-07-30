@@ -1,0 +1,98 @@
+name: Build iOS IPA
+
+on:
+  push:
+    branches: [ master, main ]
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build web app
+      run: npm run build
+      
+    - name: Setup Capacitor
+      run: |
+        npx cap sync ios
+        
+    - name: Setup Xcode version
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+        
+    - name: Install CocoaPods
+      run: |
+        cd ios/App
+        pod install
+        
+    - name: Build iOS app
+      run: |
+        cd ios/App
+        xcodebuild -workspace App.xcworkspace \
+          -scheme App \
+          -configuration Release \
+          -destination generic/platform=iOS \
+          -archivePath App.xcarchive \
+          archive
+          
+    - name: Export IPA
+      run: |
+        cd ios/App
+        # Create export options plist
+        cat > ExportOptions.plist << EOF
+        <?xml version="1.0" encoding="UTF-8"?>
+        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+        <plist version="1.0">
+        <dict>
+            <key>method</key>
+            <string>development</string>
+            <key>compileBitcode</key>
+            <false/>
+            <key>signingStyle</key>
+            <string>automatic</string>
+            <key>stripSwiftSymbols</key>
+            <true/>
+            <key>teamID</key>
+            <string></string>
+        </dict>
+        </plist>
+        EOF
+        
+        # Export the IPA
+        xcodebuild -exportArchive \
+          -archivePath App.xcarchive \
+          -exportPath ./export \
+          -exportOptionsPlist ExportOptions.plist
+          
+    - name: Upload IPA artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScanEats-iOS-App
+        path: ios/App/export/*.ipa
+        retention-days: 30
+        
+    - name: Upload Debug Files
+      uses: actions/upload-artifact@v4
+      if: failure()
+      with:
+        name: debug-files
+        path: |
+          ios/App/App.xcarchive/
+          ios/App/*.log
+        retention-days: 7

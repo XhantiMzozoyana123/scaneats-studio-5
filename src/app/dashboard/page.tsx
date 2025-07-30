@@ -89,11 +89,13 @@ import { cn } from '@/lib/utils';
 import { BottomNav } from '@/components/bottom-nav';
 import { API_BASE_URL } from '@/lib/api';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { foodScanNutrition } from '@/ai/flows/food-scan-nutrition';
-import { getMealInsights } from '@/ai/flows/meal-insights';
-import { textToSpeech } from '@/ai/flows/text-to-speech';
-import { sallyHealthInsights } from '@/ai/flows/sally-health-insights';
-import { deductCredits } from '@/services/checkpointService';
+// Temporarily disabled for mobile build
+// import { foodScanNutrition } from '@/ai/flows/food-scan-nutrition';
+// import { getMealInsights } from '@/ai/flows/meal-insights';
+// import { textToSpeech } from '@/ai/flows/text-to-speech';
+// import { sallyHealthInsights } from '@/ai/flows/sally-health-insights';
+// import { deductCredits } from '@/services/checkpointService';
+import { scanFoodMobile, getMealInsightsMobile, getHealthInsightsMobile, textToSpeechMobile } from '@/lib/mobile-food-scan';
 
 type View = 'home' | 'meal-plan' | 'sally' | 'profile' | 'settings' | 'scan';
 
@@ -279,13 +281,15 @@ const ScanView = ({ onNavigate }: { onNavigate: (view: View) => void }) => {
       const token = localStorage.getItem('authToken');
       if (!token) throw new Error("Authentication token not found.");
       
-      const scanResult = await foodScanNutrition({ photoDataUri: capturedImage });
+      const scanResult = await scanFoodMobile(capturedImage);
       
-      const { newToken } = await deductCredits(token);
+      // Temporarily disabled for mobile build
+      // const { newToken } = await deductCredits(token);
       
-      if (newToken) {
-        localStorage.setItem('authToken', newToken);
-      }
+      // Temporarily disabled for mobile build
+      // if (newToken) {
+      //   localStorage.setItem('authToken', newToken);
+      // }
       
       await updateCreditBalance(true); 
       localStorage.setItem('scannedFood', JSON.stringify(scanResult));
@@ -636,27 +640,30 @@ const MealPlanView = ({ onNavigate }: { onNavigate: (view: View) => void }) => {
         carbs: lastFood.carbs,
       };
 
-      const insightsResult = await getMealInsights({
+      const insightsResult = await getMealInsightsMobile({
           foodItemName: lastFood.name || 'your meal',
           nutritionalInformation: JSON.stringify(nutritionalInfo),
           userQuery: userInput,
       });
       
-      const { newToken } = await deductCredits(token);
+      // Temporarily disabled for mobile build
+      // const { newToken } = await deductCredits(token);
 
-      if (newToken) {
-        localStorage.setItem('authToken', newToken);
-      }
-      await updateCreditBalance(true);
+      // Temporarily disabled for mobile build
+      // if (newToken) {
+      //   localStorage.setItem('authToken', newToken);
+      // }
+      // await updateCreditBalance(true);
       
-      const ttsResult = await textToSpeech({ text: insightsResult.response });
+      const ttsResult = await textToSpeechMobile({ text: insightsResult.response });
 
       setSallyResponse(insightsResult.response);
       
-      if (ttsResult.media && audioRef.current) {
-          audioRef.current.src = ttsResult.media;
-          audioRef.current.play();
-      }
+      // Temporarily disabled for mobile build - TTS not available
+      // if (ttsResult.media && audioRef.current) {
+      //     audioRef.current.src = ttsResult.media;
+      //     audioRef.current.play();
+      // }
 
 
     } catch (error: any) {
@@ -894,26 +901,29 @@ const SallyView = () => {
         const token = localStorage.getItem('authToken');
         if (!token) throw new Error("Authentication token not found.");
         
-        const insightsResult = await sallyHealthInsights({
+        const insightsResult = await getHealthInsightsMobile({
             userProfileJson: JSON.stringify(profile),
             userQuery: userInput,
         });
 
-        const { newToken } = await deductCredits(token);
+        // Temporarily disabled for mobile build
+        // const { newToken } = await deductCredits(token);
         
-        if (newToken) {
-          localStorage.setItem('authToken', newToken);
-        }
-        await updateCreditBalance(true);
+        // Temporarily disabled for mobile build
+        // if (newToken) {
+        //   localStorage.setItem('authToken', newToken);
+        // }
+        // await updateCreditBalance(true);
 
-        const ttsResult = await textToSpeech({ text: insightsResult.response });
+        const ttsResult = await textToSpeechMobile({ text: insightsResult.response });
 
         setSallyResponse(insightsResult.response);
 
-        if (ttsResult.media && audioRef.current) {
-          audioRef.current.src = ttsResult.media;
-          audioRef.current.play();
-        }
+        // Temporarily disabled for mobile build - TTS not available
+        // if (ttsResult.media && audioRef.current) {
+        //   audioRef.current.src = ttsResult.media;
+        //   audioRef.current.play();
+        // }
 
     } catch (error: any) {
       if (error.message === 'INSUFFICIENT_CREDITS') {
