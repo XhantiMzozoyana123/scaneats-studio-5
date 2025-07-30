@@ -1,163 +1,38 @@
-name: Export IPA from XCARCHIVE
+name: Convert XCARCHIVE to IPA
 
 on:
   workflow_dispatch:
-    inputs:
-      export_method:
-        description: 'Export method'
-        required: true
-        default: 'development'
-        type: choice
-        options:
-        - development
-        - ad-hoc
-        - app-store
-        - enterprise
-      archive_name:
-        description: 'Archive name (without .xcarchive extension)'
-        required: true
-        default: 'App'
+  push:
+    paths: ['*.xcarchive/**']
 
 jobs:
-  export-ipa:
+  convert:
     runs-on: macos-latest
-    
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      
-    - name: Setup Xcode
-      uses: maxim-lobanov/setup-xcode@v1
-      with:
-        xcode-version: latest-stable
-        
-    - name: Create build directory
-      run: mkdir -p build output
-      
-    - name: Download XCARCHIVE (if in repository)
+    - uses: actions/checkout@v4
+    - name: Convert to IPA
       run: |
-        echo "Looking for XCARCHIVE files..."
-        find . -name "*.xcarchive*" -type f
+        ARCHIVE=$(find . -name "*.xcarchive" -type d | head -1)
+        [ -z "$ARCHIVE" ] && echo "No .xcarchive found" && exit 1
         
-        # If you have a zipped archive, unzip it
-        if [ -f "${{ github.event.inputs.archive_name }}.xcarchive.zip" ]; then
-          echo "Unzipping ${{ github.event.inputs.archive_name }}.xcarchive.zip"
-          unzip "${{ github.event.inputs.archive_name }}.xcarchive.zip" -d build/
-        elif [ -d "${{ github.event.inputs.archive_name }}.xcarchive" ]; then
-          echo "Using existing ${{ github.event.inputs.archive_name }}.xcarchive"
-          cp -r "${{ github.event.inputs.archive_name }}.xcarchive" build/
-        else
-          echo "❌ No XCARCHIVE found. Please upload your .xcarchive file to the repository."
-          echo "Expected: ${{ github.event.inputs.archive_name }}.xcarchive or ${{ github.event.inputs.archive_name }}.xcarchive.zip"
-          exit 1
-        fi
-        
-    - name: Create ExportOptions.plist
-      run: |
         cat > ExportOptions.plist << EOF
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
         <plist version="1.0">
         <dict>
             <key>method</key>
-            <string>${{ github.event.inputs.export_method }}</string>
-            <key>teamID</key>
-            <string></string>
-            <key>compileBitcode</key>
-            <false/>
-            <key>uploadBitcode</key>
-            <false/>
-            <key>uploadSymbols</key>
-            <true/>
+            <string>development</string>
             <key>signingStyle</key>
             <string>automatic</string>
         </dict>
         </plist>
         EOF
         
-    - name: Export IPA from XCARCHIVE
-      run: |
-        ARCHIVE_PATH="build/${{ github.event.inputs.archive_name }}.xcarchive"
+        mkdir output
+        xcodebuild -exportArchive -archivePath "$ARCHIVE" -exportPath output -exportOptionsPlist ExportOptions.plist
+        mv output/*.ipa output/ScanEats.ipa 2>/dev/null || true
         
-        if [ ! -d "$ARCHIVE_PATH" ]; then
-          echo "❌ Archive not found at: $ARCHIVE_PATH"
-          echo "Available files in build/:"
-          ls -la build/
-          exit 1
-        fi
-        
-        echo "✅ Found archive at: $ARCHIVE_PATH"
-        echo "📦 Exporting IPA with method: ${{ github.event.inputs.export_method }}"
-        
-        xcodebuild -exportArchive \
-          -archivePath "$ARCHIVE_PATH" \
-          -exportPath output \
-          -exportOptionsPlist ExportOptions.plist \
-          -verbose
-          
-    - name: List exported files
-      run: |
-        echo "📁 Contents of output directory:"
-        ls -la output/
-        echo ""
-        echo "🔍 Looking for IPA files:"
-        find output -name "*.ipa" -type f
-        
-    - name: Rename IPA with build info
-      run: |
-        cd output
-        IPA_FILE=$(find . -name "*.ipa" -type f | head -n 1)
-        if [ -n "$IPA_FILE" ]; then
-          NEW_NAME="ScanEats-${{ github.event.inputs.export_method }}-$(date +%Y%m%d-%H%M%S).ipa"
-          mv "$IPA_FILE" "$NEW_NAME"
-          echo "✅ Renamed IPA to: $NEW_NAME"
-          echo "IPA_NAME=$NEW_NAME" >> $GITHUB_ENV
-        else
-          echo "❌ No IPA file found in output directory"
-          exit 1
-        fi
-        
-    - name: Upload IPA as artifact
-      uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v4
       with:
-        name: ScanEats-IPA-${{ github.event.inputs.export_method }}
-        path: output/*.ipa
-        retention-days: 30
-        
-    - name: Upload export logs
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: Export-Logs-${{ github.event.inputs.export_method }}
-        path: |
-          ExportOptions.plist
-          output/ExportOptions.plist
-          output/Packaging.log
-          output/DistributionSummary.plist
-        retention-days: 7
-        
-    - name: Create release (optional)
-      if: github.event.inputs.export_method == 'app-store'
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: v1.0.${{ github.run_number }}
-        name: ScanEats iOS App Store Build
-        body: |
-          🍎 **ScanEats iOS App Store Build**
-          
-          **Export Method**: ${{ github.event.inputs.export_method }}
-          **Build Date**: ${{ steps.date.outputs.date }}
-          **Archive**: ${{ github.event.inputs.archive_name }}.xcarchive
-          
-          **Installation:**
-          - Download the IPA file from Assets below
-          - Upload to App Store Connect for review
-          
-          **Next Steps:**
-          1. Download IPA from Assets
-          2. Upload to App Store Connect
-          3. Configure app metadata
-          4. Submit for Apple review
-        files: output/*.ipa
-        draft: false
-        prerelease: true
+        name: ScanEats-IPA
+        path: output/ScanEats.ipa
