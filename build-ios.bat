@@ -23,12 +23,13 @@ echo 1. 🏗️  Trigger development build (current changes)
 echo 2. 🚀 Create production release (new tag)
 echo 3. 🆓 FREE: Trigger open-source build (no signing required)
 echo 4. ⚡ IONIC APPFLOW: Professional cloud builds (FREE tier)
-echo 5. 📋 Check build status
-echo 6. 📥 Download latest IPA
-echo 7. 📖 Show installation guide
+echo 5. 🏪 APP STORE: Official iOS App Store submission
+echo 6. 📋 Check build status
+echo 7. 📥 Download latest IPA
+echo 8. 📖 Show installation guide
 echo.
 
-set /p choice="Choose an option (1-7): "
+set /p choice="Choose an option (1-8): "
 
 if "%choice%"=="1" (
     echo.
@@ -97,6 +98,34 @@ if "%choice%"=="1" (
     )
 ) else if "%choice%"=="5" (
     echo.
+    echo 🏪 App Store Submission Setup
+    echo ==============================
+    echo.
+    echo 📋 Requirements for App Store:
+    echo ✅ Apple Developer Account ($99/year)
+    echo ✅ App icons and screenshots
+    echo ✅ App Store Connect listing
+    echo ✅ Distribution certificates
+    echo.
+    echo 💰 Investment Required: $99 USD/year
+    echo ⏱️ Timeline: 6-14 days total
+    echo 🎯 Result: Your app on the official App Store!
+    echo.
+    set /p appstore="Open App Store submission guide? (y/N): "
+    if /i "%appstore%"=="y" (
+        start docs\app-store-submission-guide.md
+        echo ✅ App Store guide opened!
+        echo.
+        echo 🚀 Next steps:
+        echo 1. Get Apple Developer account
+        echo 2. Create app assets (icons, screenshots)
+        echo 3. Configure Appflow for app-store builds
+        echo 4. Submit to App Store Connect
+    ) else (
+        echo 💡 Check docs\app-store-submission-guide.md anytime
+    )
+) else if "%choice%"=="6" (
+    echo.
     echo 📋 Check GitHub Actions in your browser:
     echo Go to your repository on GitHub and click the "Actions" tab
     echo.
@@ -117,7 +146,7 @@ if "%choice%"=="1" (
     echo 2. Click on a completed build
     echo 3. Scroll down to 'Artifacts' section
     echo 4. Download 'ScanEats-iOS-Unsigned' or similar
-) else if "%choice%"=="7" (
+) else if "%choice%"=="8" (
     echo.
     echo 📖 Opening installation guide...
     start docs\ios-installation-guide.md
