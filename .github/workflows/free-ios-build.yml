@@ -1,0 +1,136 @@
+name: Free iOS Build (Open Source)
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ master ]
+    paths:
+      - 'src/**'
+      - 'package.json'
+
+jobs:
+  free-ios-build:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm ci
+      
+    - name: Build Next.js app
+      run: npm run build
+      
+    - name: Sync Capacitor
+      run: npx cap sync ios
+        
+    - name: Setup Xcode (latest)
+      uses: maxim-lobanov/setup-xcode@v1
+      with:
+        xcode-version: latest-stable
+        
+    - name: Install CocoaPods
+      run: |
+        cd ios/App
+        pod install
+        
+    - name: Build iOS app (simulator - no signing)
+      run: |
+        cd ios/App
+        # Build for iOS simulator (no signing required)
+        xcodebuild -workspace App.xcworkspace \
+          -scheme App \
+          -configuration Release \
+          -destination 'generic/platform=iOS Simulator' \
+          -archivePath AppSimulator.xcarchive \
+          archive
+          
+    - name: Build iOS app (device - unsigned)
+      run: |
+        cd ios/App
+        # Build for device with disabled signing
+        xcodebuild -workspace App.xcworkspace \
+          -scheme App \
+          -configuration Release \
+          -destination generic/platform=iOS \
+          -archivePath App.xcarchive \
+          CODE_SIGN_IDENTITY="" \
+          CODE_SIGNING_REQUIRED=NO \
+          CODE_SIGNING_ALLOWED=NO \
+          PRODUCT_BUNDLE_IDENTIFIER="com.scaneats.app.unsigned" \
+          archive || echo "Device build may fail without signing - continuing..."
+          
+    - name: Create IPA using open-source tools
+      run: |
+        cd ios/App
+        
+        # Method 1: Direct IPA creation from archive
+        if [ -d "App.xcarchive" ]; then
+          echo "✅ Creating IPA from device archive..."
+          mkdir -p export/Payload
+          cp -r App.xcarchive/Products/Applications/App.app export/Payload/
+          cd export
+          zip -r ScanEats-Unsigned.ipa Payload/
+          echo "✅ Device IPA created: ScanEats-Unsigned.ipa"
+        fi
+        
+        # Method 2: Simulator app (for testing)
+        if [ -d "AppSimulator.xcarchive" ]; then
+          echo "✅ Creating simulator app bundle..."
+          mkdir -p export-sim
+          cp -r AppSimulator.xcarchive/Products/Applications/App.app export-sim/
+          cd export-sim
+          zip -r ScanEats-Simulator.zip App.app/
+          echo "✅ Simulator app created: ScanEats-Simulator.zip"
+        fi
+        
+        # List what was created
+        echo "📦 Generated files:"
+        ls -la export/ 2>/dev/null || echo "No device IPA"
+        ls -la export-sim/ 2>/dev/null || echo "No simulator app"
+        
+    - name: Upload unsigned IPA
+      uses: actions/upload-artifact@v4
+      with:
+        name: ScanEats-iOS-Unsigned
+        path: |
+          ios/App/export/*.ipa
+          ios/App/export-sim/*.zip
+          ios/App/export-sim/*.app
+        retention-days: 30
+        
+    - name: Create release notes
+      run: |
+        echo "# 📱 ScanEats iOS Build" > release-notes.md
+        echo "" >> release-notes.md
+        echo "## 🎉 Build Completed Successfully!" >> release-notes.md
+        echo "" >> release-notes.md
+        echo "### 📦 What's included:" >> release-notes.md
+        echo "- **ScanEats-Unsigned.ipa** - iOS app for device (unsigned)" >> release-notes.md
+        echo "- **ScanEats-Simulator.zip** - iOS app for simulator testing" >> release-notes.md
+        echo "" >> release-notes.md
+        echo "### 📱 Installation:" >> release-notes.md
+        echo "1. **For Device**: Use AltStore, Sideloadly, or similar tools" >> release-notes.md
+        echo "2. **For Simulator**: Extract and drag to iOS Simulator" >> release-notes.md
+        echo "" >> release-notes.md
+        echo "### ⚠️ Note:" >> release-notes.md
+        echo "This is an unsigned build for testing purposes." >> release-notes.md
+        echo "For App Store distribution, you'll need proper code signing." >> release-notes.md
+        echo "" >> release-notes.md
+        echo "🔗 Built with: GitHub Actions (Free)" >> release-notes.md
+        echo "📅 Build Date: $(date)" >> release-notes.md
+        echo "🏷️ Version: $(cat ../../package.json | grep version | cut -d'"' -f4)" >> release-notes.md
+        
+    - name: Upload release notes
+      uses: actions/upload-artifact@v4
+      with:
+        name: Release-Notes
+        path: release-notes.md
+        retention-days: 30

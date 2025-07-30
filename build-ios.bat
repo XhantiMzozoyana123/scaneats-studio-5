@@ -21,11 +21,13 @@ echo.
 echo Available build options:
 echo 1. 🏗️  Trigger development build (current changes)
 echo 2. 🚀 Create production release (new tag)
-echo 3. 📋 Check build status
-echo 4. 📥 Download latest IPA
+echo 3. 🆓 FREE: Trigger open-source build (no signing required)
+echo 4. 📋 Check build status
+echo 5. 📥 Download latest IPA
+echo 6. 📖 Show installation guide
 echo.
 
-set /p choice="Choose an option (1-4): "
+set /p choice="Choose an option (1-6): "
 
 if "%choice%"=="1" (
     echo.
@@ -57,15 +59,37 @@ if "%choice%"=="1" (
     echo 🔗 Check GitHub Actions for progress
 ) else if "%choice%"=="3" (
     echo.
+    echo 🆓 Triggering FREE open-source build...
+    echo This uses GitHub Actions with no signing requirements!
+    echo.
+    set /p confirm="Continue with free build? (y/N): "
+    if /i "%confirm%"=="y" (
+        git add .
+        git commit -m "Trigger FREE iOS build - %date% %time%"
+        git push origin %BRANCH%
+        echo ✅ Free build triggered!
+        echo 🎉 This will create an unsigned IPA you can install with AltStore/Sideloadly
+        echo 📖 Check docs\ios-installation-guide.md for installation instructions
+        echo 🔗 Monitor progress in GitHub Actions
+    ) else (
+        echo ❌ Build cancelled
+    )
+) else if "%choice%"=="4" (
+    echo.
     echo 📋 Check GitHub Actions in your browser:
     echo Go to your repository on GitHub and click the "Actions" tab
-) else if "%choice%"=="4" (
+) else if "%choice%"=="5" (
     echo.
     echo 📥 To download IPAs:
     echo 1. Go to GitHub Actions in your repository
     echo 2. Click on a completed build
     echo 3. Scroll down to 'Artifacts' section
-    echo 4. Download 'ScanEats-iOS-Development' or similar
+    echo 4. Download 'ScanEats-iOS-Unsigned' or similar
+) else if "%choice%"=="6" (
+    echo.
+    echo 📖 Opening installation guide...
+    start docs\ios-installation-guide.md
+    echo 💡 The guide explains how to install your unsigned IPA for FREE!
 ) else (
     echo ❌ Invalid option
 )
