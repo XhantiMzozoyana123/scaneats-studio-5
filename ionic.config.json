@@ -6,5 +6,6 @@
   "type": "custom",
   "hooks": {
     "build:before": "npm run build:mobile"
-  }
+  },
+  "id": "e0d0cbc9"
 }
