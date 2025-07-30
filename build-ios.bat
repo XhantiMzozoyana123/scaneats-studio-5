@@ -22,12 +22,13 @@ echo Available build options:
 echo 1. 🏗️  Trigger development build (current changes)
 echo 2. 🚀 Create production release (new tag)
 echo 3. 🆓 FREE: Trigger open-source build (no signing required)
-echo 4. 📋 Check build status
-echo 5. 📥 Download latest IPA
-echo 6. 📖 Show installation guide
+echo 4. ⚡ IONIC APPFLOW: Professional cloud builds (FREE tier)
+echo 5. 📋 Check build status
+echo 6. 📥 Download latest IPA
+echo 7. 📖 Show installation guide
 echo.
 
-set /p choice="Choose an option (1-6): "
+set /p choice="Choose an option (1-7): "
 
 if "%choice%"=="1" (
     echo.
@@ -76,16 +77,47 @@ if "%choice%"=="1" (
     )
 ) else if "%choice%"=="4" (
     echo.
-    echo 📋 Check GitHub Actions in your browser:
-    echo Go to your repository on GitHub and click the "Actions" tab
+    echo ⚡ Setting up Ionic Appflow...
+    echo This is the BEST option for professional iOS builds!
+    echo.
+    echo 🎉 Benefits:
+    echo - 100 FREE builds per month
+    echo - Native iOS builds in the cloud
+    echo - Automatic code signing
+    echo - No Mac required
+    echo - Professional certificates handling
+    echo.
+    set /p setup="Run Appflow setup guide? (y/N): "
+    if /i "%setup%"=="y" (
+        start setup-appflow.bat
+        echo ✅ Setup guide opened!
+        echo 💡 After setup, every git push triggers a build automatically
+    ) else (
+        echo 💡 Run setup-appflow.bat anytime to get started
+    )
 ) else if "%choice%"=="5" (
     echo.
+    echo 📋 Check GitHub Actions in your browser:
+    echo Go to your repository on GitHub and click the "Actions" tab
+    echo.
+    echo 📱 Or check Ionic Appflow builds:
+    echo Go to https://dashboard.ionicframework.com/
+) else if "%choice%"=="6" (
+    echo.
     echo 📥 To download IPAs:
+    echo.
+    echo 📱 From Ionic Appflow (RECOMMENDED):
+    echo 1. Go to https://dashboard.ionicframework.com/
+    echo 2. Open your ScanEats app
+    echo 3. Go to Build section
+    echo 4. Download completed builds
+    echo.
+    echo 🔧 From GitHub Actions:
     echo 1. Go to GitHub Actions in your repository
     echo 2. Click on a completed build
     echo 3. Scroll down to 'Artifacts' section
     echo 4. Download 'ScanEats-iOS-Unsigned' or similar
-) else if "%choice%"=="6" (
+) else if "%choice%"=="7" (
     echo.
     echo 📖 Opening installation guide...
     start docs\ios-installation-guide.md

@@ -1,0 +1,34 @@
+# Ionic Appflow Configuration
+# This file configures your app for Ionic Appflow builds
+
+# Build Configuration
+build:
+  # Node.js version for builds
+  node_version: 18
+  
+  # Build commands
+  commands:
+    - npm ci
+    - npm run build:mobile
+    - npx cap sync ios
+    
+# iOS Configuration
+ios:
+  # Package type (app-store, ad-hoc, development, enterprise)
+  package_type: development
+  
+  # Build scheme
+  scheme: App
+  
+  # Build configuration  
+  configuration: Release
+  
+  # Xcode version
+  xcode_version: latest
+
+# Environment Variables (optional)
+environments:
+  production:
+    NEXT_PUBLIC_ENV: production
+  development:
+    NEXT_PUBLIC_ENV: development

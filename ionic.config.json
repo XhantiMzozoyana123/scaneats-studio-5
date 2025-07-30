@@ -1,0 +1,10 @@
+{
+  "name": "ScanEats",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "custom",
+  "hooks": {
+    "build:before": "npm run build:mobile"
+  }
+}
